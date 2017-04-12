@@ -11,7 +11,7 @@ Tested on devices
 
 Install
 ------------------------------------------------------------------------
-1. Download [last version.](https://github.com/dev-x3m/zte-auto-shutdown/archive/master.zip/master.zip)
+1. Download [last version.](https://github.com/dev-x3m/zte-shutdown/archive/master.zip)
 2. Unzip and copy ___"scripts/usr"___ to ___"/usr"___ on your device using ftp, ssh or adb
 3. Make scripts executable
     ```sh
@@ -26,20 +26,40 @@ Install
     
 Setup
 ------------------------------------------------------------------------
-`DAEMON` daemon execution path
-`SLEEP` timeout to next power status check
-`WAIT` timeout to power off after power loss
+`DAEMON`
+daemon execution path
+
+`SLEEP`
+timeout to next power status check
+
+`WAIT`
+timeout to power off after power loss
 
  Commands
 ------------------------------------------------------------------------
- `asdn start` start daemon
- `asdn stop` stop and wait daemon for exit
- `asdn status` stop and wait daemon for exit
- `asdn restart` daemon soft restart
- `asdn reload` daemon hard restart
- `asdn mode` display current mode
- `asdn auto` swith to auto mode
- `asdn manual` switch to manual mode
+`asdn start`
+start daemon
+
+`asdn stop`
+stop and wait daemon for exit
+
+`asdn status`
+stop and wait daemon for exit
+
+`asdn restart`
+daemon soft restart
+
+`asdn reload`
+daemon hard restart
+
+`asdn mode`
+display current mode
+
+`asdn auto`
+swith to auto mode
+
+`asdn manual`
+switch to manual mode
 
 Roadmap
 ------------------------------------------------------------------------
