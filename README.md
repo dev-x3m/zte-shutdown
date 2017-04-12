@@ -68,4 +68,5 @@ Roadmap
 - implement mode switch on power key press
 - add monitoring mode to status print
 - watchdog (auto restart daemon)
+- fix download mode
 - update-rc
