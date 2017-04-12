@@ -1,0 +1,93 @@
+#!/bin/sh
+
+# Setup vars
+
+# Timeouts
+SLEEP=60
+WAIT=900
+
+# Enable/Disable log
+LOGGING=1
+
+# Names
+NAME=$(basename "$0")
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DIR=/usr/modules/x3m.asdn
+PID=/var/run/$NAME.pid
+OUT=/var/log/$NAME.out
+LOG=/var/log/$NAME.log
+ERR=/var/log/$NAME.err
+MON=/dev/shm/$NAME.mon
+FLG=$DIR/$NAME.mon
+
+# Max files sizes in KB
+MAX_OUT=512
+MAX_LOG=512
+MAX_ERR=512
+
+echo $(basename "$MON") > $FLG
+
+log()
+{
+	if [ $LOGGING -eq 1 ]; then
+		process=$1
+		type=$2
+		shift
+		shift
+		echo "$(date) - ${process}[$$:$type]: $*" >> $LOG
+	fi
+}
+
+if [ ! -f $LOG ]; then touch $LOG; log "main" "LOG" "New log opened."; fi
+if [ ! -f $OUT ]; then touch $OUT; log "main" "LOG" "New out opened."; fi
+if [ ! -f $ERR ]; then touch $ERR; log "main" "LOG" "New err opened."; fi
+if [ $(du -k "$LOG" | cut -f 1) -ge $MAX_LOG ]; then rm $LOG; log "main" "LOG" "New log opened. Starting up..."; else echo "" >> $LOG; log "main" "LOG" " Starting up..."; fi
+if [ $(du -k "$OUT" | cut -f 1) -ge $MAX_OUT ]; then rm $OUT; touch $OUT; log "main" "LOG" "New out opened."; fi
+if [ $(du -k "$ERR" | cut -f 1) -ge $MAX_ERR ]; then rm $ERR; touch $ERR; log "main" "LOG" "New err opened."; fi
+
+if [ -e $PID ]; then
+	_pid=$(cat ${PID});
+	if [ -e /proc/${_pid} ]; then
+		log "main" "ERR!" "Alredy running with pid = $_pid";
+		exit 0;
+	fi
+fi
+
+echo "0" > /sys/class/leds/led\:wifi-yellow/blink;
+_pwr=$(cat /sys/class/android_usb/android0/ztecharge)
+if [ $_pwr -eq 1 ]; then
+	log "main" "MSG" "Power detected. Monitoring..."
+	touch $MON;
+else
+	log "main" "MSG" "Power not detected. Manual mode."
+fi
+
+cd /
+exec >> $OUT
+exec 2>> $ERR
+exec < /dev/null
+echo $$ > $PID
+trap  "{ rm -f ${PID}; log 'main' 'MSG' 'Sig exit. Exiting...'; exit 255; }" TERM INT EXIT 
+
+while true; do
+	if [ -f $MON ]; then
+		_pwr=$(cat /sys/class/android_usb/android0/ztecharge)
+		if [ $_pwr -eq 0 ]; then
+			log "main" "EVENT" "Power disconnected. Count down to power off..."
+# TODO: Split wait here
+			echo "200 1000" > /sys/class/leds/led\:wifi-yellow/blink;
+			sleep $WAIT;
+			_pwr=$(cat /sys/class/android_usb/android0/ztecharge)
+# TODO: Spilit events (power & manual)
+			if [ $_pwr -eq 0 ] && [ -f $MON ]; then
+				log "main" "EVENT" "Powering off..."
+				shutdown -hP now;
+				exit 0;
+			else
+				log "main" "EVENT" "Power detected. Monitoring..."
+				echo "0" > /sys/class/leds/led\:wifi-yellow/blink;
+			fi
+		fi
+	fi
+        sleep $SLEEP
+done

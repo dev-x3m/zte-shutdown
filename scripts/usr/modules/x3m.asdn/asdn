@@ -1,0 +1,100 @@
+#!/bin/sh
+DAEMON=/usr/modules/x3m.asdn/asdnd
+DESC="Auto Shutdown Daemon"
+NAME=$(basename "$DAEMON")
+PID=/var/run/$NAME.pid
+
+test -f $DAEMON || exit 0
+
+set -e
+
+case "$1" in
+    start)
+        echo -n "starting $DESC: $NAME... "
+	start-stop-daemon -S -b -x $DAEMON
+	echo "done."
+	;;
+    stop)
+        echo -n "stopping $DESC: $NAME... "
+	start-stop-daemon -K -n $NAME
+        echo -n "waiting for process to exit..."
+	_wait=1
+	while [ $_wait -eq 1 ]; do
+		if [ -e $PID ]; then
+			_pid=$(cat ${PID});
+			if [ ! -e /proc/${_pid} ]; then
+				_wait=0;
+			fi
+		else
+			_wait=0;
+		fi
+		sleep 1;
+	        echo -n "."
+	done
+	echo "done."
+	;;
+    status)
+	echo -n "$NAME "
+#	start-stop-daemon -q -K -t -n $NAME
+#	RET=$?
+#	if [ "$RET" = "0" ]; then
+#		_pid=`cat $PID`
+#		echo "($_pid) is running"
+#	else
+#		echo "is not running"
+#		exit $RET
+#	fi
+	if [ -e $PID ]; then
+		_pid=$(cat ${PID});
+		if [ -e /proc/${_pid} ]; then
+			echo "($_pid) is running"
+		else
+			echo "is not running"
+		fi
+	else
+		echo "is not running"
+	fi
+	;;
+    restart)
+        echo "restarting: $NAME... "
+ 	$0 stop
+	$0 start
+	echo "done."
+	;;
+    reload)
+    	echo "reloading: $NAME... "
+    	echo -n "terminating: $NAME... "
+    	killall -HUP $NAME
+	echo "done."
+	sleep 1
+	$0 start
+	echo "done."
+	;;
+    mode)
+    	MON=$(cat ${DAEMON}.mon)
+	if [ -e /dev/shm/$MON ]; then
+		echo "Auto mode now."
+	else
+		echo "Manual mode now."
+	fi
+	;;
+    auto)
+    	echo -n "mode: auto... "
+    	MON=$(cat ${DAEMON}.mon)
+	if [ ! -f $MON ]; then touch /dev/shm/$MON; fi
+	echo "done."
+	;;
+    manual)
+    	echo -n "mode: manual... "
+    	MON=$(cat ${DAEMON}.mon)
+	if [ -f $MON ]; then rm /dev/shm/$MON; fi
+	echo "done."
+	;;
+    *)
+	echo "Usage: $0 {start|stop|status|restart|reload|mode|auto|manual}"
+	exit 1
+	;;
+esac
+
+exit 0
+# TODO: Update do be 
