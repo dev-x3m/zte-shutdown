@@ -29,6 +29,9 @@ Setup
 `DAEMON`
 daemon execution path
 
+`LOGGING`
+enable or disable logging
+
 `SLEEP`
 timeout to next power status check
 
