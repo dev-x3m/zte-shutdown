@@ -10,19 +10,23 @@ set -e
 
 case "$1" in
     start)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
         echo -n "starting $DESC: $NAME... "
 	start-stop-daemon -S -b -x $DAEMON
 	echo "done."
 	;;
     stop)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
         echo -n "stopping $DESC: $NAME... "
 	start-stop-daemon -K -n $NAME
         echo -n "waiting for process to exit..."
 	_wait=1
 	while [ $_wait -eq 1 ]; do
 		if [ -e $PID ]; then
-			_pid=$(cat ${PID});
-			if [ ! -e /proc/${_pid} ]; then
+#			_pid=$(cat ${PID});
+#			if [ -e /proc/${_pid} ]; then
+#			ps -o pid | grep $(cat $PID) > /dev/null
+			if ! (ps -o pid | grep $(cat ${PID}) > /dev/null); then
 				_wait=0;
 			fi
 		else
@@ -34,6 +38,7 @@ case "$1" in
 	echo "done."
 	;;
     status)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
 	echo -n "$NAME "
 #	start-stop-daemon -q -K -t -n $NAME
 #	RET=$?
@@ -46,7 +51,9 @@ case "$1" in
 #	fi
 	if [ -e $PID ]; then
 		_pid=$(cat ${PID});
-		if [ -e /proc/${_pid} ]; then
+#		if [ -e /proc/${_pid} ]; then
+#		ps -o pid | grep $(cat ${PID}) > /dev/null || true
+		if (ps -o pid | grep $(cat ${PID}) > /dev/null); then
 			echo "($_pid) is running"
 		else
 			echo "is not running"
@@ -56,12 +63,14 @@ case "$1" in
 	fi
 	;;
     restart)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
         echo "restarting: $NAME... "
  	$0 stop
 	$0 start
 	echo "done."
 	;;
     reload)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
     	echo "reloading: $NAME... "
     	echo -n "terminating: $NAME... "
     	killall -HUP $NAME
@@ -71,6 +80,7 @@ case "$1" in
 	echo "done."
 	;;
     mode)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
     	MON=$(cat ${DAEMON}.mon)
 	if [ -e /dev/shm/$MON ]; then
 		echo "Auto mode now."
@@ -79,18 +89,21 @@ case "$1" in
 	fi
 	;;
     auto)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
     	echo -n "mode: auto... "
     	MON=$(cat ${DAEMON}.mon)
 	if [ ! -f $MON ]; then touch /dev/shm/$MON; fi
 	echo "done."
 	;;
     manual)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
     	echo -n "mode: manual... "
     	MON=$(cat ${DAEMON}.mon)
 	if [ -f $MON ]; then rm /dev/shm/$MON; fi
 	echo "done."
 	;;
     *)
+#	echo "$(date) - [$$]: $*" >> /var/log/asdn.log
 	echo "Usage: $0 {start|stop|status|restart|reload|mode|auto|manual}"
 	exit 1
 	;;

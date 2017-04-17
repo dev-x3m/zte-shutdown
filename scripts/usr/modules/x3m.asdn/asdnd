@@ -47,7 +47,9 @@ if [ $(du -k "$ERR" | cut -f 1) -ge $MAX_ERR ]; then rm $ERR; touch $ERR; log "m
 
 if [ -e $PID ]; then
 	_pid=$(cat ${PID});
-	if [ -e /proc/${_pid} ]; then
+#	if [ -e /proc/${_pid} ]; then
+#	ps -o pid | grep $(cat $PID) > /dev/null
+	if (ps -o pid | grep $_pid > /dev/null) && [ $NAME = $(basename $(cat /proc/$_pid/cmdline)) ]; then
 		log "main" "ERR!" "Alredy running with pid = $_pid";
 		exit 0;
 	fi
